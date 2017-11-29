@@ -14,7 +14,7 @@ print(data1)
 
 # sys.exit()
 
-with open('sample/speakers.csv', 'rb') as f:
+with open('sample/attendees.csv', 'rb') as f:
     reader = csv.reader(f)
     your_list = list(reader)
 
