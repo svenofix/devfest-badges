@@ -1,5 +1,6 @@
 import csv
 import os
+import subprocess
 import sys
 
 from argparse import ArgumentParser
@@ -56,11 +57,14 @@ with open(attendees) as csvFile:
         template_copy = template_copy.replace(TWITTER_PLACEHOLDER, twitter)
 
         # Write out copy of template to file
-        out_filename = 'attendee_' + str(index) + '.svg'
-        out_file = open('output/' + out_filename, 'w')
+        out_filename = 'output/attendee_' + str(index) + '.svg'
+        out_file = open(out_filename, 'w')
         out_file.write(template_copy)
         out_file.close()
 
-        print(first_name + ' ' + last_name + ' ' + company + ' ' + twitter)
+        # Convert SVG to PDF using Inkscape
+        subprocess.run(['inkscape', out_filename, '--export-pdf=output/attendee_' + str(index) + '.pdf',
+                        '--export-dpi=300'])
+
 
 sys.exit(1)
