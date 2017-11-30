@@ -1,9 +1,14 @@
+import html.parser
 import csv
+import glob
 import os
 import subprocess
 import sys
 
 from argparse import ArgumentParser
+
+# "Constants"
+from glob import glob
 
 FIRST_NAME_PLACEHOLDER = 'XXFIRSTNAMEXX'
 LAST_NAME_PLACEHOLDER = 'XXNAMEXX'
@@ -15,7 +20,7 @@ LAST_NAME_INDEX = 1
 COMPANY_INDEX = 4
 TWITTER_INDEX = 7
 
-print(sys.argv)
+DEFAULT_DPI = 300
 
 # Setup argument parser
 parser = ArgumentParser(description='Create Attendee badges for Devfest')
@@ -25,30 +30,36 @@ parser.add_argument('-a', '--attendees', dest='attendees', type=str, nargs=1, de
                          'required structure')
 parser.add_argument('-t', '--template', dest='template', type=str, nargs=1, default='sample/template.svg',
                     help='badge template file to be used. MUST be an SVG.')
+parser.add_argument('-d', '--dpi', dest='dpi', type=int, nargs=1, default=DEFAULT_DPI,
+                    help='output DPI')
 
 args = parser.parse_args()
 
 # Input files
 attendees = args.attendees
 template = args.template
+dpi = args.dpi
 
-
+print('Creating output dir.')
 os.makedirs(os.path.dirname('output/'), exist_ok=True)
 
+print('Open template file.')
 with open(template) as template_file:
     template = template_file.read().replace('\n', '')
 
-with open(attendees) as csvFile:
+print('Open attendee file.')
+with open(attendees, 'r') as csvFile:
     reader = csv.reader(csvFile, delimiter=';')
+    print('Begin row parsing.')
     for index, row in enumerate(reader):
         # Copy template since we need to replace placeholder text
         template_copy = template
 
         # Get relevant data from CSV
-        first_name = row[FIRST_NAME_INDEX]
-        last_name = row[LAST_NAME_INDEX]
-        company = row[COMPANY_INDEX] if row[COMPANY_INDEX] != '-' else ''
-        twitter = row[TWITTER_INDEX] if row[TWITTER_INDEX] != '-' else ''
+        first_name = html.escape(row[FIRST_NAME_INDEX])
+        last_name = html.escape(row[LAST_NAME_INDEX])
+        company = html.escape(row[COMPANY_INDEX]) if row[COMPANY_INDEX] != '-' else ''
+        twitter = html.escape(row[TWITTER_INDEX]) if row[TWITTER_INDEX] != '-' else ''
 
         # Replace placeholders with actual data
         template_copy = template_copy.replace(FIRST_NAME_PLACEHOLDER, first_name)
@@ -57,14 +68,33 @@ with open(attendees) as csvFile:
         template_copy = template_copy.replace(TWITTER_PLACEHOLDER, twitter)
 
         # Write out copy of template to file
+        print('\nCreating SVG badge...')
         out_filename = 'output/attendee_' + str(index) + '.svg'
         out_file = open(out_filename, 'w')
         out_file.write(template_copy)
         out_file.close()
 
         # Convert SVG to PDF using Inkscape
+        print('Converting SVG to PDF...')
         subprocess.run(['inkscape', out_filename, '--export-pdf=output/attendee_' + str(index) + '.pdf',
-                        '--export-dpi=300'])
+                        '--export-dpi=' + str(dpi)])
 
+        # Cleanup
+        os.remove(out_filename)
 
+# Merge PDF files
+pdf_files = glob('./output/attendee_*.pdf')
+pdf_files.sort()
+
+pdftk_args = ['pdftk', 'cat', 'output', './output/merged.pdf']
+pdftk_args[1:1] = pdf_files
+
+subprocess.run(pdftk_args)
+
+# Cleanup
+for file in pdf_files:
+    os.remove(file)
+
+print()
+print('All done!')
 sys.exit(1)
