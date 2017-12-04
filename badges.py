@@ -1,24 +1,10 @@
-import html.parser
-import csv
 import glob
 import os
 import subprocess
 import sys
 
 from argparse import ArgumentParser
-
-# "Constants"
-from glob import glob
-
-FIRST_NAME_PLACEHOLDER = 'XXFIRSTNAMEXX'
-LAST_NAME_PLACEHOLDER = 'XXNAMEXX'
-COMPANY_PLACEHOLDER = 'XXCOMPANYXX'
-TWITTER_PLACEHOLDER = 'XXTWITTERXX'
-
-FIRST_NAME_INDEX = 0
-LAST_NAME_INDEX = 1
-COMPANY_INDEX = 4
-TWITTER_INDEX = 7
+from template import make_badges
 
 DEFAULT_DPI = 300
 
@@ -43,50 +29,14 @@ dpi = args.dpi
 print('Creating output dir.')
 os.makedirs(os.path.dirname('output/'), exist_ok=True)
 
-print('Open template file.')
-with open(template) as template_file:
-    template = template_file.read().replace('\n', '')
+make_badges(template, attendees, dpi)
 
-print('Open attendee file.')
-with open(attendees, 'r') as csvFile:
-    reader = csv.reader(csvFile, delimiter=';')
-    print('Begin row parsing.')
-    for index, row in enumerate(reader):
-        # Copy template since we need to replace placeholder text
-        template_copy = template
-
-        # Get relevant data from CSV
-        first_name = html.escape(row[FIRST_NAME_INDEX])
-        last_name = html.escape(row[LAST_NAME_INDEX])
-        company = html.escape(row[COMPANY_INDEX]) if row[COMPANY_INDEX] != '-' else ''
-        twitter = html.escape(row[TWITTER_INDEX]) if row[TWITTER_INDEX] != '-' else ''
-
-        # Replace placeholders with actual data
-        template_copy = template_copy.replace(FIRST_NAME_PLACEHOLDER, first_name)
-        template_copy = template_copy.replace(LAST_NAME_PLACEHOLDER, last_name)
-        template_copy = template_copy.replace(COMPANY_PLACEHOLDER, company)
-        template_copy = template_copy.replace(TWITTER_PLACEHOLDER, twitter)
-
-        # Write out copy of template to file
-        print('\nCreating SVG badge...')
-        out_filename = 'output/attendee_' + str(index) + '.svg'
-        out_file = open(out_filename, 'w')
-        out_file.write(template_copy)
-        out_file.close()
-
-        # Convert SVG to PDF using Inkscape
-        print('Converting SVG to PDF...')
-        subprocess.run(['inkscape', out_filename, '--export-pdf=output/attendee_' + str(index) + '.pdf',
-                        '--export-dpi=' + str(dpi)])
-
-        # Cleanup
-        os.remove(out_filename)
-
-# Merge PDF files
-pdf_files = glob('./output/attendee_*.pdf')
+# Get list of PDF files
+pdf_files = glob.glob('./output/attendee_*.pdf')
 pdf_files.sort()
 
 pdftk_args = ['pdftk', 'cat', 'output', './output/merged.pdf']
+# Insert list of PDF files as direct arguments for pdftk instead of using regex (eg: *.pdf)
 pdftk_args[1:1] = pdf_files
 
 subprocess.run(pdftk_args)
