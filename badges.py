@@ -1,15 +1,13 @@
 import html.parser
 import csv
-import glob
 import os
 import subprocess
 import sys
 
 from argparse import ArgumentParser
-
-# "Constants"
 from glob import glob
 
+# "Constants"
 FIRST_NAME_PLACEHOLDER = 'XXFIRSTNAMEXX'
 LAST_NAME_PLACEHOLDER = 'XXNAMEXX'
 COMPANY_PLACEHOLDER = 'XXCOMPANYXX'
@@ -17,12 +15,12 @@ TWITTER_PLACEHOLDER = 'XXTWITTERXX'
 
 FIRST_NAME_INDEX = 0
 LAST_NAME_INDEX = 1
-COMPANY_INDEX = 4
-TWITTER_INDEX = 7
+COMPANY_INDEX = 2
+TWITTER_INDEX = 3
 
 DEFAULT_DPI = 300
 
-# Setup argument parser
+# Argument parser
 parser = ArgumentParser(description='Create Attendee badges for Devfest')
 
 parser.add_argument('-a', '--attendees', dest='attendees', type=str, nargs=1, default='sample/attendees.csv',
@@ -87,6 +85,7 @@ pdf_files = glob('./output/attendee_*.pdf')
 pdf_files.sort()
 
 pdftk_args = ['pdftk', 'cat', 'output', './output/merged.pdf']
+# Insert list of pdf files after 'pdftk' command
 pdftk_args[1:1] = pdf_files
 
 subprocess.run(pdftk_args)
