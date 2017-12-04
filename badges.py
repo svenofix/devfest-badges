@@ -24,8 +24,7 @@ DEFAULT_DPI = 300
 parser = ArgumentParser(description='Create Attendee badges for Devfest')
 
 parser.add_argument('-a', '--attendees', dest='attendees', type=str, nargs=1, default='sample/attendees.csv',
-                    help='attendee list to import data from. MUST ba a CSV. See additional documentation for '
-                         'required structure')
+                    help='attendee list to import data from. MUST ba a CSV.')
 parser.add_argument('-t', '--template', dest='template', type=str, nargs=1, default='sample/template.svg',
                     help='badge template file to be used. MUST be an SVG.')
 parser.add_argument('-d', '--dpi', dest='dpi', type=int, nargs=1, default=DEFAULT_DPI,
