@@ -50,6 +50,9 @@ with open(attendees, 'r') as csvFile:
     reader = csv.reader(csvFile, delimiter=';')
     print('Begin row parsing.')
     for index, row in enumerate(reader):
+        print()
+        print('Begin badge #' + str(index + 1))
+
         # Copy template since we need to replace placeholder text
         template_copy = template
 
@@ -66,7 +69,7 @@ with open(attendees, 'r') as csvFile:
         template_copy = template_copy.replace(TWITTER_PLACEHOLDER, twitter)
 
         # Write out copy of template to file
-        print('\nCreating SVG badge...')
+        print('Creating SVG badge...')
         out_filename = 'output/attendee_' + str(index) + '.svg'
         out_file = open(out_filename, 'w')
         out_file.write(template_copy)
